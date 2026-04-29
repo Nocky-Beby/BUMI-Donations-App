@@ -1,0 +1,181 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String             @id @default(uuid())
+  fullName           String             @map("full_name")
+  email              String             @unique
+  phone              String?
+  passwordHash       String             @map("password_hash")
+  role               String
+  organization       String?
+  status             String             @default("ACTIVE")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+  updatedNeeds       Need[]             @relation("NeedUpdatedBy")
+  donations          Donation[]         @relation("UserDonations")
+  validatedDonations Donation[]         @relation("DonationValidatedBy")
+  receivedDonations  Donation[]         @relation("DonationReceivedBy")
+  allocatedDonations Donation[]         @relation("DonationAllocatedBy")
+  trackingEvents     DonationTracking[] @relation("TrackingActor")
+  distributions      Distribution[]     @relation("DistributionActor")
+  auditLogs          AuditLog[]         @relation("AuditActor")
+  reportSnapshots    ReportSnapshot[]   @relation("ReportCreator")
+  notifications      Notification[]     @relation("UserNotifications")
+
+  @@map("users")
+}
+
+model Partner {
+  id            String   @id @default(uuid())
+  name          String
+  contactPerson String?  @map("contact_person")
+  email         String?
+  phone         String?
+  sector        String?
+  status        String   @default("ACTIVE")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("partners")
+}
+
+model Need {
+  id              String         @id @default(uuid())
+  title           String
+  category        String
+  description     String
+  imageUrl        String?        @map("image_url")
+  priority        String         @default("MEDIUM")
+  targetQuantity  Float          @default(0) @map("target_quantity")
+  currentQuantity Float          @default(0) @map("current_quantity")
+  targetAmount    Float          @default(0) @map("target_amount")
+  currentAmount   Float          @default(0) @map("current_amount")
+  unit            String         @default("FC")
+  status          String         @default("PUBLISHED")
+  updatedById     String?        @map("updated_by_id")
+  updatedBy       User?          @relation("NeedUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  donations       Donation[]
+  distributions   Distribution[]
+
+  @@map("needs")
+}
+
+model Donation {
+  id                 String             @id @default(uuid())
+  userId             String             @map("user_id")
+  user               User               @relation("UserDonations", fields: [userId], references: [id], onDelete: Restrict)
+  needId             String?            @map("need_id")
+  need               Need?              @relation(fields: [needId], references: [id], onDelete: SetNull)
+  type               String
+  amount             Float              @default(0)
+  currency           String             @default("CDF")
+  normalizedValueCdf Float              @default(0) @map("normalized_value_cdf")
+  description        String?
+  source             String             @default("PLATFORM")
+  status             String             @default("SUBMITTED")
+  donorLabel         String?            @map("donor_label")
+  validatedAt        DateTime?          @map("validated_at")
+  validatedById      String?            @map("validated_by_id")
+  validatedBy        User?              @relation("DonationValidatedBy", fields: [validatedById], references: [id], onDelete: SetNull)
+  receivedAt         DateTime?          @map("received_at")
+  receivedById       String?            @map("received_by_id")
+  receivedBy         User?              @relation("DonationReceivedBy", fields: [receivedById], references: [id], onDelete: SetNull)
+  allocatedAt        DateTime?          @map("allocated_at")
+  allocatedById      String?            @map("allocated_by_id")
+  allocatedBy        User?              @relation("DonationAllocatedBy", fields: [allocatedById], references: [id], onDelete: SetNull)
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+  trackingEvents     DonationTracking[]
+  distributions      Distribution[]
+
+  @@index([status])
+  @@index([needId])
+  @@index([userId])
+  @@map("donations")
+}
+
+model DonationTracking {
+  id         String   @id @default(uuid())
+  donationId String   @map("donation_id")
+  donation   Donation @relation(fields: [donationId], references: [id], onDelete: Cascade)
+  status     String
+  message    String
+  actorId    String?  @map("actor_id")
+  actor      User?    @relation("TrackingActor", fields: [actorId], references: [id], onDelete: SetNull)
+  actorLabel String?  @map("actor_label")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("donation_tracking")
+}
+
+model Distribution {
+  id               String    @id @default(uuid())
+  donationId       String?   @map("donation_id")
+  donation         Donation? @relation(fields: [donationId], references: [id], onDelete: SetNull)
+  needId           String    @map("need_id")
+  need             Need      @relation(fields: [needId], references: [id], onDelete: Restrict)
+  quantity         Float     @default(0)
+  amount           Float     @default(0)
+  beneficiaryGroup String?   @map("beneficiary_group")
+  notes            String?
+  status           String    @default("COMPLETED")
+  distributedById  String?   @map("distributed_by_id")
+  distributedBy    User?     @relation("DistributionActor", fields: [distributedById], references: [id], onDelete: SetNull)
+  distributedAt    DateTime  @default(now()) @map("distributed_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  @@map("distributions")
+}
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  user      User      @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  message   String
+  channel   String    @default("IN_APP")
+  status    String    @default("PENDING")
+  readAt    DateTime? @map("read_at")
+  meta      String?
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@map("notifications")
+}
+
+model ReportSnapshot {
+  id          String    @id @default(uuid())
+  name        String
+  type        String
+  payload     String
+  periodStart DateTime? @map("period_start")
+  periodEnd   DateTime? @map("period_end")
+  createdById String?   @map("created_by_id")
+  createdBy   User?     @relation("ReportCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("report_snapshots")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String?  @map("actor_id")
+  actor      User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String?  @map("entity_id")
+  details    String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("audit_logs")
+}

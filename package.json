@@ -1,0 +1,36 @@
+{
+  "name": "bumi-donations-app-sqlite-prisma",
+  "private": true,
+  "version": "4.3.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "client": "vite",
+    "server": "npm --workspace server run dev",
+    "fullstack": "concurrently \"npm run server\" \"npm run client\"",
+    "build": "vite build",
+    "preview": "vite preview",
+    "db:generate": "npm --workspace server run prisma:generate",
+    "db:push": "npm --workspace server run prisma:push",
+    "db:seed": "npm --workspace server run prisma:seed",
+    "db:init": "npm run db:generate && npm run db:push && npm run db:seed"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^9.1.2",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.14",
+    "vite": "^5.4.10"
+  },
+  "workspaces": [
+    "server"
+  ]
+}

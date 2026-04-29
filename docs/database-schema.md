@@ -1,0 +1,103 @@
+# Schéma de base de données — SQLite + Prisma
+
+## users
+- id
+- full_name
+- email
+- phone
+- password_hash
+- role
+- organization
+- status
+- created_at
+- updated_at
+
+## partners
+- id
+- name
+- contact_person
+- email
+- phone
+- sector
+- status
+- created_at
+- updated_at
+
+## needs
+- id
+- title
+- category
+- description
+- priority
+- target_quantity
+- current_quantity
+- target_amount
+- current_amount
+- unit
+- status
+- updated_by_id
+- created_at
+- updated_at
+
+## donations
+- id
+- user_id
+- need_id
+- type
+- amount
+- currency
+- normalized_value_cdf
+- description
+- source
+- status
+- donor_label
+- validated_at
+- validated_by_id
+- received_at
+- received_by_id
+- allocated_at
+- allocated_by_id
+- created_at
+- updated_at
+
+## donation_tracking
+- id
+- donation_id
+- status
+- message
+- actor_id
+- actor_label
+- created_at
+
+## distributions
+- id
+- donation_id
+- need_id
+- quantity
+- amount
+- beneficiary_group
+- notes
+- status
+- distributed_by_id
+- distributed_at
+- created_at
+
+## report_snapshots
+- id
+- name
+- type
+- payload
+- period_start
+- period_end
+- created_by_id
+- created_at
+- updated_at
+
+## audit_logs
+- id
+- actor_id
+- action
+- entity_type
+- entity_id
+- details
+- created_at
